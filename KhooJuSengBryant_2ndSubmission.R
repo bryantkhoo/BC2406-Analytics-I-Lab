@@ -5,7 +5,7 @@
 #=========================================================================================================
 
 # Custom function to setwd to wherever the R-script is.
-#install.packages('rstudioapi')
+install.packages('rstudioapi')
 set_wd <- function() {
   library(rstudioapi) # make sure you have it installed
   current_path <- getActiveDocumentContext()$path 
@@ -40,7 +40,7 @@ summary(dividends.data)
 # Check custID for the 56 NAs. Same?
 dvc_na <- subset(dividends.data, is.na(dividends.data$dvc))
 ib_na <- subset(dividends.data, is.na(dividends.data$ib))
-#install.packages('sqldf')
+install.packages('sqldf')
 require(sqldf)
 a1NotIna2 <- sqldf('SELECT * FROM dvc_na EXCEPT SELECT * FROM ib_na')
 # Findings: 1671 observations that were NA in dvc were not NA in ib
@@ -92,7 +92,7 @@ g + geom_point(shape=1)+labs(x = "SIC") + labs(y = "Income")
 
 # Remove observations that do not report income
 
-dividends.data.2d <- subset(dividends.data.2c, !is.na(dividends.data.2c$ib))
+dividends.data.2d <- subset(dividends.data.2c, subset=(!is.na(dividends.data.2c$ib)))
 nrow(dividends.data.2d) # 34195 rows left
 summary(dividends.data.2d) # no more NA values!
 
@@ -117,9 +117,7 @@ summary(dividends.data.2e$prstkc)
 # Explore how prstkc is scattered if its na vs its not, does it significantly affect div?
 g <- ggplot(dividends.data.2e, aes(x = is.na(dividends.data.2e$prstkc), y = dividends.data.2e$dvc)) 
 g + geom_point(shape=1)+labs(x = "prstkc") + labs(y = "Dividends") # Not very obvious
-
 # Check if % of those NA with +ve dvc is same as those not NA
-
 # For those that are NA
 length(which(is.na(dividends.data.2e$prstkc) & dividends.data.2e$dvc>0)) #203
 length(which(is.na(dividends.data.2e$prstkc) & dividends.data.2e$dvc==0)) #1152, roughly 15% dvc>0
@@ -127,8 +125,6 @@ length(which((dividends.data.2e$prstkc==0) & dividends.data.2e$dvc>0)) #2378
 length(which((dividends.data.2e$prstkc==0) & dividends.data.2e$dvc==0)) #7969, roughly 23% dvc>0
 # Percentage quite close, might be off due to difference in size.
 # To avoid making wrong assumptions, I will ommit NAs (Last resort)
-
-
 length(which(dividends.data.2e$prstkc==0)) #10347 are 0
 # Perhaps prstkc NA are for missing records.
 # min prstkc is -1. How many?
@@ -149,11 +145,6 @@ df <- data.frame(FiscalYear=as.character(),
                  NoOfDivPaying=as.character(),
                  NoOfStockRepurc=as.character(),
                  stringsAsFactors=FALSE) 
-insertRow <- function(existingDF, newrow, r) {
-  existingDF[seq(r+1,nrow(existingDF)+1),] <- existingDF[seq(r,nrow(existingDF)),]
-  existingDF[r,] <- newrow
-  existingDF
-}
 
 for (year in 2007:2017){
   df<-rbind(df, data.frame(FiscalYear=year,
@@ -164,6 +155,17 @@ for (year in 2007:2017){
                            ))
 }
 # I assumed that companies that did stock repurchases had prstkc value >0
+
+df$FiscalYear <- factor(df$FiscalYear)
+
+g <- ggplot(df, aes(x = df$FiscalYear, y = df$NoOfLoss/df$NoOfComp)) 
+g + geom_bar(stat="identity") + ylim(0,1)+labs(x = "Fiscalyear") + labs(y = "NoOfLoss/NoOfComp")
+
+g <- ggplot(df, aes(x = df$FiscalYear, y = df$NoOfDivPaying/df$NoOfComp)) 
+g + geom_bar(stat="identity") + ylim(0,1)+labs(x = "Fiscalyear") + labs(y = "NoOfDivPaying/NoOfComp")
+
+g <- ggplot(df, aes(x = df$FiscalYear, y = df$NoOfStockRepurc/df$NoOfComp)) 
+g + geom_bar(stat="identity") + ylim(0,1)+labs(x = "Fiscalyear") + labs(y = "NoOfStockRepurc/NoOfComp")
 
 
 # 4
